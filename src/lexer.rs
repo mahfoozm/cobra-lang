@@ -7,63 +7,108 @@ pub use self::token::Token {
     Comma,
     Identifier(String),
     Number(f64),
-    Operator(String)
+    Operator(String),
+    If,
+    Then,
+    Else,
+    For,
+    In,
 };
+
+pub struct Lexer<I>
+    where I: Iterator<Item=char>
+{
+    input: Peekable<I>,
+    last_char: Option<char>,
 }
 
-#[derive(PartialEq, Debug)]
-pub enum Token {
-    Def,
-    Extern,
-    Delimiter,
-    OpeningParenthesis,
-    ClosingParenthesis,
-    Comma,
-    Identifier(String),
-    Number(f64),
-    Operator(String)
-}
+impl<I> Lexer<I>
+    where I: Iterator<Item=char>,
+{
+    pub fn new(mut input: I) -> Lexer<I> {
+        let last_char = input.next();
+        Lexer {
+            input: input.peekable(),
+            last_char: last_char,
+        }
+    }
 
-pub fn tokenize(input: &str) -> Vec<Token> {
+    fn step(&mut self) -> Option<char> {
+        self.last_char = self.input.next();
+        self.last_char
+    }
 
-    let comment_regex = Regex::new(r"//.*").unwrap();
-    let preprocessed = comment.replace_all(input, "\n");
+    pub fn gettok(&mut self) -> Token {
+        while matches!(self.last_char, Some(' ') | Some('\t') | Some('\n')) {
+            self.step();
+        }
 
-    let mut result = Vec::new();
+        let last_char = if let Some(c) = self.last_char {
+            c
+        } else {
+            return Token::Eof;
+        };
 
-    let token_regex = regex!(concat!(
-        r"(?P<identifier>[a-zA-Z][a-zA-Z0-9]*)|",
-        r"(?P<number>[0-9]+(\.[0-9]+)?)|",
-        r"(?P<operator>\S)|",
-        r"(?P<delimiter>\(|\)|,)",
-        r"(?P<oppar>\()|",
-        r"(?P<clpar>\))|",
-        r"(?P<comma>,)"
-    ));
+        if last_char.is_ascii_alphabetic() {
+            let mut identifier = String::new();
+            identifier.push(last_char);
+            
+            while let Some(&c) = self.input.peek() {
+                if c.is_ascii_alphanumeric() {
+                    identifier.push(c);
+                    self.step();
+                } else {
+                    break;
+                }
+            }
 
-    for cap in token.captures_iter(preprocessed.as_str()) {
-        let token = if let Some(ident) = cap.name("ident") {
-            match ident.as_str() {
+            match identifier.as_str() {
                 "def" => Token::Def,
                 "extern" => Token::Extern,
-                identifier => Token::Identifier(identifier.to_string())
+                "if" => Token::If,
+                "then" => Token::Then,
+                "else" => Token::Else,
+                "for" => Token::For,
+                "in" => Token::In,
+                _ => Token::Identifier(identifier),
             }
-        } else if let Some(number) = cap.name("number") {
-            Token::Number(number.as_str().parse().unwrap())
-        } else if let Some(operator) = cap.name("operator") {
-            Token::Operator(operator.as_str().to_string())
-        } else if let Some(delimiter) = cap.name("delimiter") {
-            Token::Delimiter
-        } else if let Some(oppar) = cap.name("oppar") {
-            Token::OpeningParenthesis
-        } else if let Some(clpar) = cap.name("clpar") {
-            Token::ClosingParenthesis
-        } else if let Some(comma) = cap.name("comma") {
-            Token::Comma
+
+        } else if last_char.is_ascii_digit() || last_char == '.' {
+            let mut number = String::new();
+            number.push(last_char);
+            while let Some(&c) = self.input.peek() {
+                if c.is_ascii_digit() || c == '.' {
+                    number.push(c);
+                    self.step();
+                } else {
+                    break;
+                }
+            }
+            Token::Number(number.parse().expect("Lexer: Invalid number"))
+
+        } else if last_char == '#' {
+            while let Some(&c) = self.input.peek() {
+                if c != '\n' {
+                    self.step();
+                } else {
+                    break;
+                }
+            }
+            self.gettok()
+
         } else {
-            panic!("Unrecognized token: {}", cap.at(0).unwrap());
-        };
-        result.push(token);
+            let mut operator = String::new();
+            operator.push(last_char);
+            while let Some(&c) = self.input.peek() {
+                if !c.is_ascii_alphanumeric() {
+                    operator.push(c);
+                    self.step();
+                } else {
+                    break;
+                }
+            }
+
+            Token::Operator(operator)
+        }
     }
-    result
 }
