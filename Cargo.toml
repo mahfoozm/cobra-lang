@@ -1,0 +1,7 @@
+[package]
+name = "cobra-lang"
+version = "0.1.0"
+
+[dependencies]
+libc     = "0.2"
+llvm-sys = {version = "160.1", features = ["strict-versioning"]}
