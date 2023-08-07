@@ -1,11 +1,11 @@
 use std::collections::HashMap;
-use crate::llvm::{IRBuilder, FnValue, FunctionPassManager, Module, Value}
-use crate::parser::{ExprAST, FunctionAST, PrototypeAST}
+use crate::llvm::{IRBuilder, FnValue, FunctionPassManager, Module, Value};
+use crate::parser::{ExprAST, FunctionAST, PrototypeAST};
 use crate::Either;
 
 type ParseResult<T> = Result<T, String>;
 
-pub struct IRGen<'llvm, 'a'> {
+pub struct IRGen<'llvm, 'a> {
     builder: &'a IRBuilder<'llvm>,
     module: &'llvm Module,
     fn_proto_map: &'a mut HashMap<String, PrototypeAST>,
@@ -29,8 +29,8 @@ impl<'llvm, 'a> IRGen<'llvm, 'a> {
         };
 
         match compilee {
-            Either::Left(proto) => ir_gen.compile_proto(proto),
-            Either::Right(func) => ir_gen.compile_func(func),
+            Either::Left(proto) => ir_gen.compile(proto),
+            Either::Right(func) => ir_gen.compile(func),
         }
     }
 
