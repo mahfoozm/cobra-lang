@@ -29,7 +29,7 @@ cargo run
 ## Example
 
 ```python
-# Prints the fibonacci sequence up to n.
+# fib.ks: Prints the fibonacci sequence up to n.
 def fib(n)
   if n < 3 then
     1
