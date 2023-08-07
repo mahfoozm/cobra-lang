@@ -29,14 +29,14 @@ pub struct FunctionAST(pub PrototypeAST, pub ExprAST);
 type ParseResult<T> = Result<T, String>;
 
 pub struct Parser<I>
-    where I: Iterator<Item=token>
+    where I: Iterator<Item=char>
 {
     lexer: I,
     current_token: Option<token>,
 }
 
 impl<I> Parser<I>
-    where I: Iterator<Item=token>,
+    where I: Iterator<Item=char>,
 {
     pub fn new(lexer: Lexer<I>) -> Self {
         Parser {
@@ -181,7 +181,7 @@ impl<I> Parser<I>
     fn parse_bin_op_rhs(&mut self, expr_prec: u8, lhs: ExprAST) -> ParseResult<ExprAST> {
         let mut lhs = lhs;
         loop {
-            let token_prec = self.current_token().bin_op_precedence();
+            let token_prec = get_token_precedence(self.current_token());
             if token_prec < expr_prec {
                 return Ok(lhs);
             }
@@ -191,11 +191,22 @@ impl<I> Parser<I>
             };
             self.get_next_token();
             let mut rhs = self.parse_primary()?;
-            let next_prec = self.current_token().bin_op_precedence();
+            let next_prec = get_token_precedence(self.current_token());
             if token_prec < next_prec {
                 rhs = self.parse_bin_op_rhs(token_prec + 1, rhs)?;
             }
             lhs = ExprAST::BinaryOp(bin_op, Box::new(lhs), Box::new(rhs));
+        }
+    }
+
+    fn parse_primary(&mut self) -> ParseResult<ExprAST> {
+        match *self.current_token() {
+            Token::Identifier(_) => self.parse_identifier_expr(),
+            Token::Number(_) => self.parse_num_expr(),
+            Token::Char('(') => self.parse_paren_expr(),
+            Token::If => self.parse_if_expr(),
+            Token::For => self.parse_for_expr(),
+            _ => Err(format!("Expected primary expression, found {:?}", self.current_token())),
         }
     }
 
