@@ -1,5 +1,5 @@
 use cobra_lang::{
-    codegen::Codegen,
+    ir_gen::IRGen,
     lexer::{Lexer, Token},
     parser::{Parser, PrototypeAST},
     Either,
@@ -62,22 +62,22 @@ where
                 }
             },
             _ => match parser.parse_top_level_expr() {
-                Ok(function) => {
-                    let name = function.0.name.clone();
-                    fn_protos.insert(name.clone(), function.0);
-                    fn_jit_rs.insert(name.clone(), jit.add_module(&module));
-                    let mut codegen = Codegen::new(&mut module, &mut fn_protos, &mut fn_jit_rs);
-                    match codegen.generate_code(&function.1) {
-                        Ok(_) => {
-                            jit.remove_module(&module);
-                            module = llvm::Module::new();
-                        }
-                        Err(e) => {
-                            println!("Error: {}", e);
-                            jit.remove_module(&module);
-                            module = llvm::Module::new();
+                Ok(func) => {
+                    println!("Parse top-level expression");
+                    if let Ok(func) = Codegen::compile(&module, &mut fn_protos, Either::B(&func)) {
+                        func.dump();
+
+                        let _rt = jit.add_module(module);
+                        module = llvm::Module::new();
+                        let fp = jit.find_symbol::<unsafe extern "C" fn() -> f64>("__anon_expr");
+                        unsafe {
+                            println!("Evaluated to {}", fp());
                         }
                     }
+                }
+                Err(err) => {
+                    eprintln!("Error: {:?}", err);
+                    parser.get_next_token();
                 }
             },
         };
