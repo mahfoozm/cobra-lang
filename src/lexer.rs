@@ -1,4 +1,7 @@
-pub use self::token::Token {
+use std::iter::Peekable;
+
+#[derive(Debug, PartialEq)]
+pub enum Token {
     Def,
     Extern,
     Delimiter,
@@ -8,12 +11,13 @@ pub use self::token::Token {
     Identifier(String),
     Number(f64),
     Operator(String),
+    Char(char),
     If,
     Then,
     Else,
     For,
     In,
-};
+}
 
 pub struct Lexer<I>
     where I: Iterator<Item=char>
