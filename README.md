@@ -58,7 +58,7 @@ block2:                                           ; preds = %block
   br label %block5
 
 block5:                                           ; preds = %block, %block2
-  %phi = phi double [ %fadd, %block2 ], [ 1.000000e+00, %block ] # if coming from block, return 1, otherwise return value from block2
+  %phi = phi double [ %fadd, %block2 ], [ 1.000000e+00, %block ] # if coming from block, return 1, otherwise return value from block2 (phi node, SSA)
   ret double %phi
 }
 define double @__anon_expr() {
