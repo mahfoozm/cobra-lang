@@ -46,25 +46,25 @@ Parse fib.ks.
 Parse 'def'
 define double @fib(double %n) {
 block:
-  %fcmpult = fcmp ult double %n, 3.000000e+00
-  br i1 %fcmpult, label %block5, label %block2
+  %fcmpult = fcmp ult double %n, 3.000000e+00 # check if n is less than 3 (if condition)
+  br i1 %fcmpult, label %block5, label %block2 # if n is less than 3, branch to block5, otherwise to block2
 
 block2:                                           ; preds = %block
-  %fsub = fadd double %n, -1.000000e+00
-  %call = call double @fib(double %fsub)
-  %fsub3 = fadd double %n, -2.000000e+00
-  %call4 = call double @fib(double %fsub3)
-  %fadd = fadd double %call, %call4
+  %fsub = fadd double %n, -1.000000e+00 # subtract 1 from n
+  %call = call double @fib(double %fsub) # call function fib recursively
+  %fsub3 = fadd double %n, -2.000000e+00 # subtract 2 from n
+  %call4 = call double @fib(double %fsub3) # call function fib recursively
+  %fadd = fadd double %call, %call4 # add result of the two recursive calls
   br label %block5
 
 block5:                                           ; preds = %block, %block2
-  %phi = phi double [ %fadd, %block2 ], [ 1.000000e+00, %block ]
+  %phi = phi double [ %fadd, %block2 ], [ 1.000000e+00, %block ] # if coming from block, return 1, otherwise return value from block2
   ret double %phi
 }
 define double @__anon_expr() {
 block:
-  %call = call double @fib(double 1.000000e+01)
-  ret double %call
+  %call = call double @fib(double 1.000000e+01) # call function fib with n = 10
+  ret double %call # return value from function call
 }
 Evaluated to 55
 ```
